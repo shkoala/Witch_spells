@@ -114,18 +114,38 @@
   }
   function layoutBubbles(){
     if(state.screen!=='game')return;
-    const zone=$('bubble-zone');const rect=zone.getBoundingClientRect();const count=state.slots.length;
-    const scale=$('game-stage').getBoundingClientRect().width/1672;
-    let max=desktop()?76*scale:47;
-    const gap=desktop()?8*scale:5;
-    const padding=desktop()?18*scale:12;
-    const width=rect.width-padding,height=rect.height-(desktop()?16*scale:26);
-    for(let size=max;size>16;size-=1){
-      const cols=Math.max(1,Math.floor((width+gap)/(size+gap)));
-      if(Math.ceil(count/cols)*(size+gap)-gap<=height){max=size;break;}
+    const zone=$('bubble-zone'),rect=zone.getBoundingClientRect();
+    const answer=state.pairs[state.index].answer;
+    const wide=desktop(),scale=$('game-stage').getBoundingClientRect().width/1672;
+    const gap=wide?8*scale:5,inset=wide?10*scale:6;
+    const width=rect.width-2*inset,height=rect.height-2*inset;
+    const wrap=cols=>{
+      const rows=[];let start=0;
+      while(start<answer.length){
+        let end=Math.min(start+cols,answer.length);
+        if(end<answer.length){
+          const space=answer.lastIndexOf(' ',end-1);
+          if(space>=start)end=space+1;
+        }
+        rows.push({start,end});start=end;
+      }
+      return rows;
+    };
+    let size=wide?76*scale:47,rows=wrap(Math.max(1,Math.floor((width+gap)/(size+gap))));
+    while(size>12&&rows.length*(size+gap)-gap>height){
+      size-=1;rows=wrap(Math.max(1,Math.floor((width+gap)/(size+gap))));
     }
-    zone.style.setProperty('--bubble-size',`${max}px`);zone.style.setProperty('--bubble-gap',`${gap}px`);
-    $('flight-layer').style.setProperty('--bubble-size',`${max}px`);
+    zone.style.setProperty('--bubble-size',`${size}px`);
+    $('flight-layer').style.setProperty('--bubble-size',`${size}px`);
+    const totalHeight=rows.length*(size+gap)-gap;
+    const top=wide?rect.height-inset-totalHeight:inset+(height-totalHeight)/2;
+    rows.forEach((row,y)=>{
+      const rowWidth=(row.end-row.start)*(size+gap)-gap;
+      for(let i=row.start;i<row.end;i++){
+        state.slots[i].style.left=`${(rect.width-rowWidth)/2+(i-row.start)*(size+gap)}px`;
+        state.slots[i].style.top=`${top+y*(size+gap)}px`;
+      }
+    });
   }
   function makeBubble(char){const b=document.createElement('span');b.className='letter-bubble';b.textContent=char===' '?'␣':char;b.setAttribute('aria-label',char===' '?'space':char);if(char===' ')b.classList.add('space-letter');return b;}
   function updateLive(){$('answer-live').textContent=state.typed?`Your answer: ${state.typed}`:'Your answer is empty.';}
@@ -159,12 +179,24 @@
     const flight=document.createElement('span');flight.className='flying-bubble';flight.style.cssText=`left:${target.left-stage.left}px;top:${target.top-stage.top}px;width:${target.width}px;height:${target.height}px`;
     flight.append(makeBubble(char));$('flight-layer').append(flight);bubble.style.visibility='hidden';
     const dx=origin.left-target.left-target.width/2,dy=origin.top-target.top-target.height/2;
-    const animation=flight.animate([
+    const scale=stage.width/1672;
+    const targetX=target.left-stage.left+target.width/2,targetY=target.top-stage.top+target.height/2;
+    const corridorX=stage.width*.385-targetX;
+    const corridorY=origin.top-stage.top-targetY-24*scale;
+    // Rise from the cauldron, then pass to the right of the witch before climbing.
+    const frames=desktop()?[
+      {transform:`translate(${dx}px,${dy}px) scale(.18)`,opacity:.45,offset:0},
+      {transform:`translate(${corridorX}px,${corridorY}px) scale(.8)`,opacity:1,offset:.32},
+      {transform:`translate(${corridorX}px,${Math.max(24*scale,stage.height*.45-targetY)}px) scale(1)`,opacity:1,offset:.58},
+      {transform:`translate(0,${-10*scale}px) scale(1.04)`,opacity:1,offset:.86},
+      {transform:'translate(0,0) scale(1)',opacity:1,offset:1}
+    ]:[
       {transform:`translate(${dx}px,${dy}px) scale(.18)`,opacity:.45,offset:0},
       {transform:`translate(${dx*.94}px,${dy*.73}px) scale(.7)`,opacity:1,offset:.24},
       {transform:`translate(${dx*.38}px,${Math.min(-12,dy*.15-25)}px) scale(1.07)`,opacity:1,offset:.76},
       {transform:'translate(0,0) scale(1)',opacity:1,offset:1}
-    ],{duration:640,easing:'cubic-bezier(.23,.65,.25,1)',fill:'forwards'});
+    ];
+    const animation=flight.animate(frames,{duration:desktop()?900:640,easing:'cubic-bezier(.23,.65,.25,1)',fill:'forwards'});
     state.animations.add(animation);
     animation.finished.then(()=>{state.animations.delete(animation);if(generation===state.generation&&bubble.isConnected)bubble.style.visibility='';flight.remove();}).catch(()=>{if(bubble.isConnected)bubble.style.visibility='';flight.remove();});
   }
