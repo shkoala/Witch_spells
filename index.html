@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#504065">
+  <meta name="description" content="Turn translations into English words, one magical letter at a time. A spelling game by SHKOALA.">
+  <title>Word Potion · SHKOALA</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="core.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main>
+    <section id="setup-screen" class="screen setup-screen" aria-labelledby="page-title">
+      <header class="brand-header">
+        <span class="brand-note">A little English. A little magic.</span>
+        <img class="brand-logo" src="assets/shkoala-logo.png" alt="SHKOALA. Use it. Love it. Live it.">
+        <a class="donate-link" href="https://vk.ru/abc_shkoala?w=donut_payment-190039625&amp;levelId=3559" target="_blank" rel="noopener noreferrer">More games <span aria-hidden="true">↗</span></a>
+      </header>
+      <div class="setup-layout">
+        <div class="story-art" aria-hidden="true"><div class="art-caption"><span class="mini-star">✦</span> A pinch of letters.<br>A spoonful of wonder.</div><span class="art-tag">MADE FOR LITTLE WORD WIZARDS</span></div>
+        <div class="teacher-desk">
+          <p class="eyebrow">WELCOME TO THE WITCH’S WORKSHOP</p>
+          <h1 id="page-title">Word <span>Potion</span><i aria-hidden="true">✧</i></h1>
+          <p class="intro">Read the translation. Pick the letters.<br>Watch your English bubble into life.</p>
+          <div class="list-card">
+            <div class="card-title"><h2>Your magic words</h2><span id="word-count" class="count-pill">5 spells</span></div>
+            <div class="list-tabs" role="tablist" aria-label="Add your words">
+              <button id="table-tab" class="tab active" role="tab" aria-selected="true" aria-controls="table-panel">Word list</button>
+              <button id="paste-tab" class="tab" role="tab" aria-selected="false" aria-controls="paste-panel">Paste a list</button>
+              <button id="import-button" class="import-button" type="button"><span aria-hidden="true">↑</span> Import file</button>
+              <input id="import-file" type="file" accept=".csv,.tsv,.txt" hidden>
+            </div>
+            <div id="table-panel" role="tabpanel" aria-labelledby="table-tab">
+              <div class="table-head"><span>ENGLISH WORD / SENTENCE</span><span>TRANSLATION</span><span></span></div>
+              <div id="word-rows" class="word-rows"></div>
+              <button id="add-row" class="text-button add-row">＋ Add a word</button>
+            </div>
+            <div id="paste-panel" role="tabpanel" aria-labelledby="paste-tab" hidden>
+              <label class="paste-label" for="paste-list">One pair per line: English ; translation</label>
+              <textarea id="paste-list" rows="5" spellcheck="false" placeholder="cat ; кот&#10;a green frog ; зелёная лягушка&#10;I can fly. ; Я умею летать."></textarea>
+              <button id="apply-paste" class="text-button">Use this list →</button>
+            </div>
+            <div class="list-footer"><span>CSV, TSV or TXT · <button id="sample-file" class="text-button">Get a sample</button></span><button id="demo-list" class="text-button">Try demo words</button></div>
+          </div>
+          <div id="setup-message" class="setup-message" aria-live="polite"></div>
+          <div class="launch-row"><label class="shuffle-label"><input id="shuffle" type="checkbox"> Mix the order</label><button id="start-game" class="primary-button">Let’s brew! <span aria-hidden="true">✦</span></button></div>
+          <p class="privacy-note">Your list stays on this device. No account needed.</p>
+        </div>
+      </div>
+      <footer class="setup-footer"><span>SHKOALA · Use it. Love it. Live it.</span><span>Click, tap or use your keyboard.</span></footer>
+    </section>
+
+    <section id="game-screen" class="screen game-screen" aria-label="Word Potion game" hidden>
+      <div class="game-viewport">
+        <div id="game-stage" class="game-stage">
+          <div class="scene-art" aria-hidden="true"></div>
+          <header class="game-topbar">
+            <button id="edit-words" class="glass-button">← Word list</button>
+            <div class="progress-badge"><span aria-hidden="true">✦</span> <span id="spell-number">Spell 1 / 5</span></div>
+            <button id="sound-toggle" class="glass-button" aria-pressed="false">Sound off</button>
+          </header>
+          <div class="parchment" aria-label="Translation clue"><span class="parchment-heading">YOUR SPELL</span><div id="translation"></div><span class="parchment-foot">Can you say it in English?</span></div>
+          <div id="bubble-zone" class="bubble-zone" role="group" aria-label="Your answer"></div>
+          <span id="cauldron-origin" class="cauldron-origin" aria-hidden="true"></span>
+          <div id="flight-layer" class="flight-layer" aria-hidden="true"></div>
+          <div id="cabinet" class="cabinet" aria-label="Letter potions"></div>
+          <div id="spell-status" class="spell-status" aria-live="polite">Pick your first potion.</div>
+          <div class="answer-tools"><button id="undo" class="wood-button">⌫ Undo</button><button id="clear" class="wood-button">Clear</button><button id="check" class="brew-button">Brew! <span aria-hidden="true">✦</span></button></div>
+          <div class="punctuation-tools" aria-label="Capital letters and punctuation">
+            <button id="capital" class="wood-button capital-button" aria-pressed="false" title="Make the next letter a capital">⇧ A</button>
+            <button class="small-key wood-button" data-char="'" aria-label="Apostrophe">'</button>
+            <button class="small-key wood-button" data-char="." aria-label="Full stop">.</button>
+            <button class="small-key wood-button" data-char="," aria-label="Comma">,</button>
+            <button class="small-key wood-button" data-char="?" aria-label="Question mark">?</button>
+            <button class="small-key wood-button" data-char="!" aria-label="Exclamation mark">!</button>
+            <button id="next" class="next-button">Skip →</button>
+          </div>
+          <span class="game-small-note">Space potion = a gap between words · ⇧ A = one capital</span>
+        </div>
+      </div>
+      <div class="game-mobile-note">A wider screen gives your magic more room. You can play in portrait too.</div>
+      <span id="answer-live" class="sr-only" aria-live="polite"></span>
+    </section>
+
+    <section id="finish-screen" class="screen finish-screen" aria-labelledby="finish-title" hidden>
+      <div class="finish-card"><div class="finish-emblem" aria-hidden="true">✦</div><p class="eyebrow">THE WORKSHOP IS GLOWING</p><h1 id="finish-title">Magic made!</h1><p id="finish-summary"></p><div id="finish-stats" class="finish-stats"></div><div class="finish-actions"><button id="play-again" class="primary-button">Brew again ✦</button><button id="finish-edit" class="secondary-button">Edit word list</button></div><p class="finish-small">A little practice. A lot of magic.</p></div>
+    </section>
+  </main>
+  <div id="load-error" class="load-error" hidden>One picture could not load. Keep the assets folder beside index.html, then refresh.</div>
+</body>
+</html>
