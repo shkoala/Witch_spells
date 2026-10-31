@@ -102,36 +102,23 @@
   function layoutBubbles(){
     if(state.screen!=='game')return;
     const zone=$('bubble-zone'),rect=zone.getBoundingClientRect();
-    const answer=state.pairs[state.index].answer;
+    const count=state.slots.length;
+    if(!count||!rect.width||!rect.height)return;
     const wide=desktop(),scale=$('game-stage').getBoundingClientRect().width/1672;
-    const gap=wide?8*scale:5,inset=wide?10*scale:6;
-    const width=rect.width-2*inset,height=rect.height-2*inset;
-    const wrap=cols=>{
-      const rows=[];let start=0;
-      while(start<answer.length){
-        let end=Math.min(start+cols,answer.length);
-        if(end<answer.length){
-          const space=answer.lastIndexOf(' ',end-1);
-          if(space>=start)end=space+1;
-        }
-        rows.push({start,end});start=end;
-      }
-      return rows;
-    };
-    let size=wide?76*scale:47,rows=wrap(Math.max(1,Math.floor((width+gap)/(size+gap))));
-    while(size>12&&rows.length*(size+gap)-gap>height){
-      size-=1;rows=wrap(Math.max(1,Math.floor((width+gap)/(size+gap))));
-    }
+    const inset=wide?10*scale:6;
+    const width=Math.max(1,rect.width-2*inset),height=Math.max(1,rect.height-2*inset);
+    const maxSize=wide?76*scale:47;
+    const gapRatio=wide?8/76:5/47;
+    // Fit every character, including spaces, on one line before typing begins.
+    const size=Math.floor(Math.min(maxSize,height,width/(count+(count-1)*gapRatio))*100)/100;
+    const gap=size*gapRatio;
+    const rowWidth=count*size+(count-1)*gap;
+    const left=(rect.width-rowWidth)/2,top=(rect.height-size)/2;
     zone.style.setProperty('--bubble-size',`${size}px`);
     $('flight-layer').style.setProperty('--bubble-size',`${size}px`);
-    const totalHeight=rows.length*(size+gap)-gap;
-    const top=wide?rect.height-inset-totalHeight:inset+(height-totalHeight)/2;
-    rows.forEach((row,y)=>{
-      const rowWidth=(row.end-row.start)*(size+gap)-gap;
-      for(let i=row.start;i<row.end;i++){
-        state.slots[i].style.left=`${(rect.width-rowWidth)/2+(i-row.start)*(size+gap)}px`;
-        state.slots[i].style.top=`${top+y*(size+gap)}px`;
-      }
+    state.slots.forEach((slot,i)=>{
+      slot.style.left=`${left+i*(size+gap)}px`;
+      slot.style.top=`${top}px`;
     });
   }
   function makeBubble(char){const b=document.createElement('span');b.className='letter-bubble';b.textContent=char===' '?'␣':char;b.setAttribute('aria-label',char===' '?'space':char);if(char===' ')b.classList.add('space-letter');return b;}
