@@ -8,28 +8,15 @@
   let resizeTimer;
   const desktop=()=>!window.matchMedia('(max-width:600px) and (orientation:portrait)').matches;
 
-  function specialBottle(symbol,label,hue) {
-    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-    svg.setAttribute('viewBox','0 0 110 125');svg.setAttribute('aria-hidden','true');svg.setAttribute('preserveAspectRatio','xMidYMax meet');
-    // The two extra potions are native vector buttons, with large readable labels.
-    svg.innerHTML=`<defs><linearGradient id="glass-${hue}" x2=".8" y2="1"><stop stop-color="hsl(${hue} 76% 86%)"/><stop offset=".5" stop-color="hsl(${hue} 70% 45%)"/><stop offset="1" stop-color="hsl(${hue} 76% 72%)"/></linearGradient><linearGradient id="cork-${hue}" x2="0" y2="1"><stop stop-color="#efc68d"/><stop offset="1" stop-color="#b77c41"/></linearGradient></defs><path d="M42 20h26v14c0 10 28 16 30 36l2 29c1 16-91 16-90 0l2-29c2-20 30-26 30-36z" fill="url(#glass-${hue})" stroke="#fff6cc" stroke-width="2.5"/><path d="M38 10q17-6 34 0l-4 17H42z" fill="url(#cork-${hue})" stroke="#89562d"/><ellipse cx="55" cy="29" rx="18" ry="5" fill="none" stroke="#fff6ca" stroke-width="3"/><path d="M25 60q-8 18-5 35M34 50l-4 3" stroke="#fff9" stroke-width="5" stroke-linecap="round" fill="none"/><rect x="23" y="63" width="64" height="39" rx="14" fill="#fff2cf" stroke="#dfbd7e"/><text x="55" y="89" text-anchor="middle" font-family="Trebuchet MS,Arial,sans-serif" font-size="${symbol==='␣'?'39':'42'}" font-weight="700" fill="#27272a">${symbol}</text>${label?`<text x="55" y="117" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" font-weight="bold" fill="#fff5d4">${label}</text>`:''}`;
-    return svg;
-  }
-
   function makeCabinet() {
     const letters='abcdefghijklmnopqrstuvwxyz'.split('');
-    const groups=[letters.slice(0,10),letters.slice(10,20),[...letters.slice(20),' ','-']];
+    const groups=[letters.slice(0,9),letters.slice(9,18),letters.slice(18)];
     groups.forEach(group=>{
       const row=document.createElement('div');row.className='shelf-row';
       group.forEach(char=>{
-        const button=document.createElement('button');button.className='potion-button';button.type='button';button.dataset.char=char;
-        button.setAttribute('aria-label',char===' '?'Space potion':char==='-'?'Dash potion':`${char} potion`);
-        button.title=char===' '?'Space':char==='-'?'Dash':char;
-        if(char===' '||char==='-'){
-          button.classList.add('special-bottle');button.append(specialBottle(char===' '?'␣':'−',char===' '?'SPACE':'DASH',char===' '?176:277));
-        } else {
-          button.dataset.upper=char.toUpperCase();const img=new Image();img.src=`assets/potions/${char}.png`;img.alt='';img.draggable=false;img.addEventListener('error',()=>{$('load-error').hidden=false;});button.append(img);
-        }
+        const button=document.createElement('button');button.className='potion-button';button.type='button';button.dataset.char=char;button.dataset.upper=char.toUpperCase();
+        button.setAttribute('aria-label',`${char} potion`);button.title=char;
+        const img=new Image();img.src=`assets/potions/${char}.png`;img.alt='';img.draggable=false;img.addEventListener('error',()=>{$('load-error').hidden=false;});button.append(img);
         button.addEventListener('click',()=>{
           if(state.solved)return;
           button.classList.remove('picked');void button.offsetWidth;button.classList.add('picked');
@@ -110,7 +97,7 @@
     $('spell-number').textContent=`Spell ${state.index+1} / ${state.pairs.length}`;
     $('bubble-zone').replaceChildren();$('bubble-zone').classList.remove('has-letters');state.slots=[];
     for(let i=0;i<current.answer.length;i++){const slot=document.createElement('span');slot.className='bubble-slot';$('bubble-zone').append(slot);state.slots.push(slot);}
-    layoutBubbles();status('Read the clue. Pick your potions.');$('next').textContent='Skip →';$('next').classList.remove('ready');syncControls();updateLive();
+    layoutBubbles();status('Read the clue. Click letters or type.');$('next').textContent='Skip →';$('next').classList.remove('ready');syncControls();updateLive();$('game-stage').focus({preventScroll:true});
   }
   function layoutBubbles(){
     if(state.screen!=='game')return;
@@ -255,16 +242,33 @@
   $('play-again').addEventListener('click',startRound);$('undo').addEventListener('click',undo);$('clear').addEventListener('click',clear);$('check').addEventListener('click',check);$('next').addEventListener('click',next);$('capital').addEventListener('click',toggleCapital);
   $('sound-toggle').addEventListener('click',()=>{state.sound=!state.sound;$('sound-toggle').setAttribute('aria-pressed',String(state.sound));$('sound-toggle').textContent=state.sound?'Sound on':'Sound off';if(state.sound)tone('bubble');});
   document.querySelectorAll('.small-key').forEach(b=>b.addEventListener('click',()=>addChar(b.dataset.char)));
+  function keyboardCharacter(e){
+    if(e.key.length===1&&/^[A-Za-z .,!?'-]$/.test(e.key))return e.key;
+    // Physical Latin letter positions also work when a Russian layout is active.
+    if(/^Key[A-Z]$/.test(e.code)){
+      const letter=e.code.slice(3).toLowerCase();
+      return e.shiftKey!==e.getModifierState('CapsLock')?letter.toUpperCase():letter;
+    }
+    if(e.code==='Space')return ' ';
+    if(e.code==='Minus'&&!e.shiftKey)return '-';
+    if(e.code==='Quote'&&!e.shiftKey)return "'";
+    if(e.code==='Period'&&!e.shiftKey)return '.';
+    if(e.code==='Comma'&&!e.shiftKey)return ',';
+    if(e.code==='Slash'&&e.shiftKey)return '?';
+    if(e.code==='Digit1'&&e.shiftKey)return '!';
+    return null;
+  }
   document.addEventListener('keydown',e=>{
     if(state.screen!=='game'||e.ctrlKey||e.metaKey||e.altKey||e.isComposing)return;
-    if(/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName))return;
+    const active=document.activeElement;
+    if(/^(INPUT|TEXTAREA|SELECT)$/.test(active?.tagName)||active?.isContentEditable)return;
     if(e.key==='Enter'){
-      if(document.activeElement?.tagName==='BUTTON')return;
       e.preventDefault();if(!e.repeat){if(state.solved)next();else check();}return;
     }
     if(e.key==='Backspace'){e.preventDefault();undo();return;}
     if(e.key==='Escape'){e.preventDefault();clear();return;}
-    if(e.key.length===1&&/^[A-Za-z .,!?'-]$/.test(e.key)){e.preventDefault();addChar(e.key,null,true);}
+    const char=keyboardCharacter(e);
+    if(char!==null){e.preventDefault();addChar(char,null,true);}
   });
   window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(state.screen==='game'){settleFlights();layoutBubbles();}},120);});
   makeCabinet();

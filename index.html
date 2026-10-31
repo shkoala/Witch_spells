@@ -55,7 +55,7 @@
 
     <section id="game-screen" class="screen game-screen" aria-label="Word Potion game" hidden>
       <div class="game-viewport">
-        <div id="game-stage" class="game-stage">
+        <div id="game-stage" class="game-stage" tabindex="-1" aria-describedby="keyboard-help">
           <div class="scene-art" aria-hidden="true"></div>
           <header class="game-topbar">
             <button id="edit-words" class="glass-button">← Word list</button>
@@ -68,17 +68,19 @@
           <div id="flight-layer" class="flight-layer" aria-hidden="true"></div>
           <div id="cabinet" class="cabinet" aria-label="Letter potions"></div>
           <div id="spell-status" class="spell-status" aria-live="polite">Pick your first potion.</div>
-          <div class="answer-tools"><button id="undo" class="wood-button">⌫ Undo</button><button id="clear" class="wood-button">Clear</button><button id="check" class="brew-button">Brew! <span aria-hidden="true">✦</span></button></div>
-          <div class="punctuation-tools" aria-label="Capital letters and punctuation">
+          <div class="answer-tools"><button id="undo" class="wood-button">⌫ Undo</button><button id="clear" class="wood-button">Clear</button></div>
+          <div class="punctuation-tools" aria-label="Typing tools and spell actions">
             <button id="capital" class="wood-button capital-button" aria-pressed="false" title="Make the next letter a capital">⇧ A</button>
+            <button class="small-key space-key wood-button" data-char=" " aria-label="Space">Space</button>
+            <button class="small-key wood-button" data-char="-" aria-label="Dash">−</button>
             <button class="small-key wood-button" data-char="'" aria-label="Apostrophe">'</button>
             <button class="small-key wood-button" data-char="." aria-label="Full stop">.</button>
             <button class="small-key wood-button" data-char="," aria-label="Comma">,</button>
             <button class="small-key wood-button" data-char="?" aria-label="Question mark">?</button>
             <button class="small-key wood-button" data-char="!" aria-label="Exclamation mark">!</button>
-            <button id="next" class="next-button">Skip →</button>
+            <div class="spell-actions"><button id="check" class="brew-button">Brew! <span aria-hidden="true">✦</span></button><button id="next" class="next-button">Skip →</button></div>
           </div>
-          <span class="game-small-note">Space potion = a gap between words · ⇧ A = one capital</span>
+          <span id="keyboard-help" class="game-small-note">Keyboard: letters, Space and - · Enter = Brew · Backspace = Undo</span>
         </div>
       </div>
       <div class="game-mobile-note">A wider screen gives your magic more room. You can play in portrait too.</div>
