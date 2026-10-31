@@ -4,6 +4,7 @@
   const $=id=>document.getElementById(id);
   const STORE='shkoala-word-potion-v1';
   const state={screen:'setup',pairs:[],index:0,typed:'',solved:false,capital:false,completed:0,skipped:0,checks:0,sound:false,generation:0,animations:new Set(),slots:[],startedAt:0};
+  const potionAnimations=new WeakMap();
   let audioContext;
   let resizeTimer;
   const desktop=()=>!window.matchMedia('(max-width:600px) and (orientation:portrait)').matches;
@@ -18,12 +19,26 @@
         button.setAttribute('aria-label',`${char} potion`);button.title=char;
         const img=new Image();img.src=`assets/potions/${char}.png`;img.alt='';img.draggable=false;img.addEventListener('error',()=>{$('load-error').hidden=false;});button.append(img);
         button.addEventListener('click',()=>{
-          if(state.solved)return;
-          button.classList.remove('picked');void button.offsetWidth;button.classList.add('picked');
-          addChar(char,button);
+          if(addChar(char,button))animatePotion(button);
         });row.append(button);
       });$('cabinet').append(row);
     });
+  }
+
+  function animatePotion(button){
+    const picture=button.querySelector('img');
+    if(!picture?.animate||window.matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+    potionAnimations.get(button)?.cancel();
+    const rest=getComputedStyle(picture).transform;
+    const animation=picture.animate([
+      {transform:rest},
+      {transform:'translateY(-12%) rotate(-6deg) scale(1.05)',offset:.35},
+      {transform:'translateY(-3%) rotate(4deg)',offset:.72},
+      {transform:rest}
+    ],{duration:280,easing:'ease-out'});
+    potionAnimations.set(button,animation);
+    const release=()=>{if(potionAnimations.get(button)===animation)potionAnimations.delete(button);};
+    animation.onfinish=release;animation.oncancel=release;
   }
 
   function setMessage(text,error=false) {
@@ -130,11 +145,11 @@
     document.querySelectorAll('.potion-button,.small-key,#capital').forEach(b=>b.disabled=state.solved);
   }
   function addChar(input,button=null,fromKeyboard=false){
-    if(state.screen!=='game'||state.solved)return;
+    if(state.screen!=='game'||state.solved)return false;
     const answer=state.pairs[state.index].answer;
-    if(state.typed.length>=answer.length){status('The spell is full. Press Brew! or undo a letter.');return;}
+    if(state.typed.length>=answer.length){status('The spell is full. Press Brew! or undo a letter.');return false;}
     let char=input;
-    if(!/^[A-Za-z .,!?'-]$/.test(char))return;
+    if(!/^[A-Za-z .,!?'-]$/.test(char))return false;
     if(/[a-z]/i.test(char)){
       if(!fromKeyboard)char=state.capital?char.toUpperCase():char.toLowerCase();
       else if(state.capital)char=char.toUpperCase();
@@ -146,6 +161,7 @@
     flyBubble(bubble,char);tone('bubble');
     status(state.typed.length===answer.length?'Ready? Press Brew!':'Keep going. Your spell is growing.');
     syncControls();updateLive();
+    return true;
   }
   function flyBubble(bubble,char){
     if(window.matchMedia('(prefers-reduced-motion:reduce)').matches||!bubble.animate)return;
